@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose";
 
 const NoteSchema = new Schema({
+  userId: { type: String, required: true },
   title: { type: String, required: true },
   content: { type: String, required: true },
   tags: { type: [String], default: [] },

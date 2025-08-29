@@ -5,19 +5,21 @@ import { Note } from "../../../models/Note.js"
 export const createNote = async(req, res, next) => {
     const{title, content, tags = []} = req.body
 
-    if(!title || !content) {
-        const error = new Error("Title, and content are required!")
+    const userId = req.user._id
+
+    if(!title || !content || !userId) {
+        const error = new Error("Title, content and userId are required!")
         error.status = 400;
         return next(error);
     }
 
     try {
-        const note = await Note.create({title, content, tags})
+        const note = await Note.create({userId, title, content, tags})
         res.status(201).json({
             error: false,
             note,
             message: "Note created successfully!",
-        })
+        });
     }   catch (err) {
         next(err)
     }
@@ -25,13 +27,21 @@ export const createNote = async(req, res, next) => {
 
 // getNote
 export const getNotes = async(req, res, next) => {
+
+    if(!req.user || !req.user._id) {
+        const error = new Error("Unauthorized: No user found in request object!");
+        error.status = 401;
+        return next (error);
+    }
+
     try {
-        const notes = await Note.find().sort({createdAt: -1})
+        const notes = await Note.find({userId: req.user._id}).sort({
+            createdAt: -1})
 
         res.status(200).json({
             error: false,
             notes,
-            message: "All notes retrieved successfully!",
+            message: "All user's notes retrieved successfully!",
         })
     }   catch (err) {
         next(err)
