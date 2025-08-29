@@ -3,21 +3,22 @@ import { Note } from "../../../models/Note.js"
 
 // createNote
 export const createNote = async(req, res, next) => {
-    const{title, content, tags = []} = req.body
-
-    if(!title || !content) {
-        const error = new Error("Title, and content are required!")
-        error.status = 400;
-        return next(error);
-    }
-
     try {
-        const note = await Note.create({title, content, tags})
+        const { title, content, tags = [] } = req.body;
+
+        if(!title || !content) {
+            const error = new Error("Title, and content are required!")
+            error.status = 400;
+            return next(error);
+        }
+
+        const note = await Note.create({title, content, tags});
+
         res.status(201).json({
             error: false,
             note,
             message: "Note created successfully!",
-        })
+        });
     }   catch (err) {
         next(err)
     }
@@ -32,7 +33,7 @@ export const getNotes = async(req, res, next) => {
             error: false,
             notes,
             message: "All notes retrieved successfully!",
-        })
+        });
     }   catch (err) {
         next(err)
     }
