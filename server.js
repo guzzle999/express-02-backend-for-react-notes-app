@@ -1,10 +1,6 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
-import apiRoutes from "./api/v1/notes.js";
-import { connectMongo } from "./config/mongo.js";
 
-dotenv.config()
 
 const app = express();
 
@@ -21,13 +17,83 @@ app.use(cors(corsOptions));
 // Middleware to parse JSON bodies
 app.use(express.json());
 
-app.use("/", apiRoutes);
-
-app.use((req, res, next) => {
-  const error = new Error("Not Found...");
-  error.status = 404;
-  next(error);
+app.get("/", (req, res, next) => {
+  try {
+    res
+      .status(200)
+      .send(
+        "Hello!, this is an Express API server for a Notes App build with React."
+      );
+  } catch (err) {
+    next(err);
+  }
 });
+
+let notes = [];
+
+app.post("/notes", (req, res, next) => {
+  try {
+    const { title, content, tags = [] } = req.body;
+    const newNote = {
+      id: String(notes.length + 1),
+      title: title,
+      content: content,
+      tags: tags,
+    };
+
+    notes.push(newNote);
+
+    res.status(201).json(newNote);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/notes", (req, res, next) => {
+  try {
+    res.status(200).json(notes);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.delete("/notes/:id", (req, res, next) => {
+  try {
+    const noteId = req.params.id;
+    const noteIndex = notes.findIndex((note) => note.id === noteId);
+
+    if (noteIndex !== -1) {
+      notes.splice(noteIndex, 1);
+      return res.status(200).json(`Note with ID ${noteId} Deleted`);
+    }
+
+    res.status(404).json("Note not found");
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.put("/notes/:id", (req, res, next) => {
+  try {
+    const noteId = req.params.id;
+    const { title, content, tags } = req.body;
+
+    const note = notes.find((n) => n.id === noteId);
+
+    if (note) {
+      if (title !== undefined) note.title = title;
+      if (content !== undefined) note.content = content;
+      if (tags !== undefined) note.tags = tags;
+
+      res.status(200).json(note);
+    } else {
+      res.status(404).send("Note not find");
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 // Centralized error handling middleware
 app.use((err, req, res, next) => {
@@ -41,17 +107,8 @@ app.use((err, req, res, next) => {
 const PORT = 3001;
 
 
-(async () => {
-  try {
-    await connectMongo()
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT} ✅ 🙌`);
-    });
-  } catch (err) {
-    console.error("❌Startup error:", err);
-    process.exit(1);
-  };
-})();
-
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT} ✅`);
+});
 
 
